@@ -82,6 +82,7 @@ def docling_convert(
     import logging
     from llama_stack_client import LlamaStackClient, RAGDocument
     import uuid
+    import json
 
     _log = logging.getLogger(__name__)
 
@@ -110,32 +111,47 @@ def docling_convert(
             except Exception as e:
                 _log.warning(f"Failed to export document to markdown: {e}")
                 document_markdown = ""
+                # print document that failed
+                _log.warning(f"Document content: {document}")
 
             if document is None:
                 _log.warning(f"Document conversion failed for {file_name}")
                 continue
 
             embedding_model, chunker = setup_chunker_and_embedder(embed_model_id, max_tokens)
-            for chunk in chunker.chunk(dl_doc=document):
-                raw_chunk = chunker.serialize(chunk=chunk)
-                embedding = embed_text(raw_chunk, embedding_model)
-                
-                rag_doc = RAGDocument(
-                    document_id=str(uuid.uuid4()),
-                    content=raw_chunk,
-                    mime_type="text/markdown",
-                    metadata={
-                        "file_name": file_name,
-                        "full_document": document_markdown,
-                    },
-                    embedding=embedding,
-                )
 
-                client.tool_runtime.rag_tool.insert(
-                    documents=[rag_doc],
-                    vector_db_id=vector_db_id,
-                    chunk_size_in_tokens=max_tokens,
-                )
+            for chunk in chunker.chunk(dl_doc=document):
+                raw_chunk = chunker.contextualize(chunk)
+                embedding = embed_text(raw_chunk, embedding_model)
+
+                chunk_id = str(uuid.uuid4())  # Generate a unique ID for the chunk
+                content_token_count = chunker.tokenizer.count_tokens(raw_chunk)
+
+                # Prepare metadata object
+                metadata_obj = {
+                    "file_name": file_name,
+                    "document_id": chunk_id,
+                    # "full_document": document_markdown,
+                    "token_count": content_token_count,
+                }
+
+                metadata_str = json.dumps(metadata_obj)
+                metadata_token_count = chunker.tokenizer.count_tokens(metadata_str)
+                metadata_obj["metadata_token_count"] = metadata_token_count
+
+                chunks_with_embedding = [
+                    {
+                        "content": raw_chunk,
+                        "mime_type": "text/markdown",
+                        "embedding": embedding,
+                        "metadata": metadata_obj,
+                    },
+                ]
+                try:
+                    client.vector_io.insert(vector_db_id=vector_db_id, chunks=chunks_with_embedding)
+                except Exception as e:
+                    _log.error(f"Failed to insert embeddings into vector database: {e}")
+                    continue
 
         _log.info(f"Processed {processed_docs} documents successfully.")
 
@@ -173,9 +189,9 @@ def docling_convert(
 
 @dsl.pipeline()
 def docling_convert_pipeline(
-    input_docs_git_repo: str = "https://github.com/docling-project/docling",
+    input_docs_git_repo: str = "https://github.com/opendatahub-io/rag",
     input_docs_git_branch: str = "main",
-    input_docs_git_folder: str = "/tests/data/pdf/",
+    input_docs_git_folder: str = "docs/kfp-pipelines/docling_rag/tests/data/pdf/",
     num_workers: int = 1,
     vector_db_id: str = "my_demo_vector_id",
     service_url: str = "http://llama-test-milvus-kserve-service:8321",
@@ -201,12 +217,12 @@ def docling_convert_pipeline(
         input_docs_git_branch=input_docs_git_branch,
         input_docs_git_folder=input_docs_git_folder,
     )
-    import_task.set_caching_options(True)
+    import_task.set_caching_options(False)
 
     pdf_splits = create_pdf_splits(
         input_path=import_task.output,
         num_splits=num_workers,
-    ).set_caching_options(True)
+    ).set_caching_options(False)
 
     with dsl.ParallelFor(pdf_splits.output) as pdf_split:
         with dsl.If(use_gpu == True):
