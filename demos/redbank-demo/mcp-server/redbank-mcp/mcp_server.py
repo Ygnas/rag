@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from functools import wraps
 from fastmcp import FastMCP
 from logger import setup_logger
@@ -55,6 +55,31 @@ def validate_date(date_str: str, param_name: str) -> str:
         )
 
 
+def validate_int(value: Any, param_name: str) -> int:
+    """Validate and convert value to integer
+
+    Args:
+        value: Value to validate (can be int, str, or other)
+        param_name: Parameter name for error messages
+
+    Returns:
+        Validated integer value
+
+    Raises:
+        ValueError: If value cannot be converted to integer
+    """
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            raise ValueError(f"{param_name} must be a valid integer, got: {value}")
+    raise ValueError(
+        f"{param_name} must be a valid integer type, got: {type(value).__name__}"
+    )
+
+
 def handle_db_errors(func):
     """Handle database errors"""
 
@@ -76,7 +101,9 @@ def handle_db_errors(func):
 @mcp.tool()
 @handle_db_errors
 def get_customer(
-    email: Optional[str] = None, phone: Optional[str] = None
+    email: Optional[str] = None,
+    phone: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Get customer by email or phone number
 
@@ -113,16 +140,18 @@ def get_customer(
 
 @mcp.tool()
 @handle_db_errors
-def search_customers_by_name(name: str) -> List[Dict[str, Any]]:
-    """Search customers by name (partial match)
+def get_customers_by_name(
+    name: str, session_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """Get customers by name (partial match)
 
     Args:
-        name: Name or partial name to search for
+        name: Name or partial name to get customers by
 
     Returns:
         List of matching customers
     """
-    logger.info(f"Searching customers with name: {name}")
+    logger.info(f"Getting customers with name: {name}")
 
     query = """
         SELECT customer_id, name, email, phone, address, account_type, 
@@ -140,15 +169,18 @@ def search_customers_by_name(name: str) -> List[Dict[str, Any]]:
 
 @mcp.tool()
 @handle_db_errors
-def get_customer_statements(customer_id: int) -> List[Dict[str, Any]]:
+def get_customer_statements(
+    customer_id: Union[int, str], session_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Get all statements for a customer
 
     Args:
-        customer_id: Customer ID
+        customer_id: Customer ID (can be integer or string)
 
     Returns:
         List of statements
     """
+    customer_id = validate_int(customer_id, "customer_id")
     logger.info(f"Retrieving statements for customer: {customer_id}")
 
     query = """
@@ -169,15 +201,18 @@ def get_customer_statements(customer_id: int) -> List[Dict[str, Any]]:
 
 @mcp.tool()
 @handle_db_errors
-def get_statement_transactions(statement_id: int) -> List[Dict[str, Any]]:
+def get_statement_transactions(
+    statement_id: Union[int, str], session_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Get all transactions for a statement
 
     Args:
-        statement_id: Statement ID
+        statement_id: Statement ID (can be integer or string)
 
     Returns:
         List of transactions
     """
+    statement_id = validate_int(statement_id, "statement_id")
     logger.info(f"Retrieving transactions for statement: {statement_id}")
 
     query = """
@@ -200,18 +235,22 @@ def get_statement_transactions(statement_id: int) -> List[Dict[str, Any]]:
 @mcp.tool()
 @handle_db_errors
 def get_customer_transactions(
-    customer_id: int, start_date: Optional[str] = None, end_date: Optional[str] = None
+    customer_id: Union[int, str],
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    session_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Get customer transactions with optional date filtering
 
     Args:
-        customer_id: Customer ID
+        customer_id: Customer ID (can be integer or string)
         start_date: Optional start date (YYYY-MM-DD)
         end_date: Optional end date (YYYY-MM-DD)
 
     Returns:
         List of transactions
     """
+    customer_id = validate_int(customer_id, "customer_id")
     logger.info(f"Retrieving transactions for customer: {customer_id}")
 
     query = """
@@ -246,78 +285,18 @@ def get_customer_transactions(
 
 @mcp.tool()
 @handle_db_errors
-def search_transactions(
-    merchant: Optional[str] = None,
-    transaction_type: Optional[str] = None,
-    min_amount: Optional[float] = None,
-    max_amount: Optional[float] = None,
-    customer_id: Optional[int] = None,
-) -> List[Dict[str, Any]]:
-    """Search transactions with filters
-
-    Args:
-        merchant: Merchant name (partial match)
-        transaction_type: DEBIT or CREDIT
-        min_amount: Minimum amount
-        max_amount: Maximum amount
-        customer_id: Customer ID
-
-    Returns:
-        List of matching transactions (max 100)
-    """
-    logger.info("Searching transactions with filters")
-
-    query = """
-        SELECT t.transaction_id, t.statement_id, s.customer_id, 
-               c.name as customer_name, t.transaction_date, t.amount, 
-               t.description, t.transaction_type, t.merchant
-        FROM transactions t
-        JOIN statements s ON t.statement_id = s.statement_id
-        JOIN customers c ON s.customer_id = c.customer_id
-        WHERE 1=1
-    """
-    params = []
-
-    if merchant:
-        query += " AND LOWER(t.merchant) LIKE LOWER(%s)"
-        params.append(f"%{merchant}%")
-
-    if transaction_type:
-        query += " AND t.transaction_type = %s"
-        params.append(transaction_type.upper())
-
-    if min_amount is not None:
-        query += " AND ABS(t.amount) >= %s"
-        params.append(min_amount)
-
-    if max_amount is not None:
-        query += " AND ABS(t.amount) <= %s"
-        params.append(max_amount)
-
-    if customer_id:
-        query += " AND s.customer_id = %s"
-        params.append(customer_id)
-
-    query += " ORDER BY t.transaction_date DESC LIMIT 100"
-
-    db.cursor.execute(query, tuple(params))
-    results = [dict(row) for row in db.cursor.fetchall()]
-
-    logger.info(f"Found {len(results)} transactions")
-    return results
-
-
-@mcp.tool()
-@handle_db_errors
-def get_statement_summary(statement_id: int) -> Dict[str, Any]:
+def get_statement_summary(
+    statement_id: Union[int, str], session_id: Optional[str] = None
+) -> Dict[str, Any]:
     """Get statement summary with balance and transaction stats
 
     Args:
-        statement_id: Statement ID
+        statement_id: Statement ID (can be integer or string)
 
     Returns:
         Statement summary or empty dict if not found
     """
+    statement_id = validate_int(statement_id, "statement_id")
     logger.info(f"Getting summary for statement: {statement_id}")
 
     query = """
@@ -357,15 +336,18 @@ def get_statement_summary(statement_id: int) -> Dict[str, Any]:
 
 @mcp.tool()
 @handle_db_errors
-def get_customer_summary(customer_id: int) -> Dict[str, Any]:
+def get_customer_summary(
+    customer_id: Union[int, str], session_id: Optional[str] = None
+) -> Dict[str, Any]:
     """Get customer summary with account info and latest balance
 
     Args:
-        customer_id: Customer ID
+        customer_id: Customer ID (can be integer or string)
 
     Returns:
         Customer summary or empty dict if not found
     """
+    customer_id = validate_int(customer_id, "customer_id")
     logger.info(f"Getting summary for customer: {customer_id}")
 
     query = """
