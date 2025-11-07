@@ -192,7 +192,7 @@ To create a Data Science Pipeline, we need to set up an AWS S3 bucket to store p
 ```bash
   oc project redbank-demo
   make deploy
-  oc apply -f deployment-yamls/deploy-whisper.yaml
+  oc apply -f deployment-yamls/whisper-deployment.yaml
   oc apply -f deployment-yamls/deploy-kokoro.yaml
   oc apply -f deployment-yamls/qwen-2-5-deployment.yaml
   oc apply -f deployment-yamls/llamastackdistribution.yaml
