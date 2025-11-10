@@ -34,6 +34,7 @@ spec:
         fsGroup: 1001
       containers:
       - name: kokoro-fastapi-gpu
+        imagePullPolicy: IfNotPresent
         image: ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.4
         ports:
         - containerPort: 8880
