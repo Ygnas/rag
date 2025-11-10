@@ -28,6 +28,7 @@ spec:
     env:
     - name: HF_HOME
       value: /tmp/hf_home
+    imagePullPolicy: IfNotPresent
     image: registry.redhat.io/rhoai/odh-vllm-cuda-rhel9@sha256:fb84fbf103bf450ef5b060fc5f21a9cf16b166dba207a3c50aa91bccd919d604
     name: kserve-container
     ports:

@@ -10,8 +10,10 @@ ifneq ($(shell which oc),)
 endif
 
 ############ Deploy/Delete All ############
-deploy-all: deploy-postgres-mcp deploy-whisper deploy-kokoro deploy-qwen-2-5 deploy-lsd-server
-	$(KUBECTL) wait --for=condition=available --timeout=600s deployment --all -n $(NAMESPACE)
+deploy-all: deploy-postgres-mcp deploy-whisper deploy-kokoro deploy-qwen-2-5
+	$(KUBECTL) wait --for=condition=available --timeout=900s deployment --all -n $(NAMESPACE)
+	$(MAKE) deploy-lsd-server
+	$(KUBECTL) wait --for=condition=available --timeout=300s deployment/lsd-server -n $(NAMESPACE)
 delete-all: delete-postgres-mcp delete-whisper delete-kokoro delete-qwen-2-5 delete-lsd-server
 
 ############ PostgreSQL and MCP Server ############
