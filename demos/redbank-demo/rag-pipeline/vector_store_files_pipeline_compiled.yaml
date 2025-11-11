@@ -7,8 +7,8 @@
 #    embedding_model_id: str [Default: 'ibm-granite/granite-embedding-125m-english']
 #    max_tokens: int [Default: 512.0]
 #    pdf_filenames: str [Default: 'redbankfinancial_about.pdf, redbankfinancial_faq.pdf']
-#    service_url: str [Default: 'http://lsd-llama-milvus-service:8321']
-#    use_gpu: bool [Default: True]
+#    service_url: str [Default: 'http://redbank-lsd-service:8321']
+#    use_gpu: bool [Default: False]
 #    vector_store_name: str [Default: 'redbank-kb-vector-store']
 components:
   comp-condition-2:
@@ -221,7 +221,7 @@ deploymentSpec:
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'llama-stack-client'\
           \ 'fire' 'requests'  &&  python3 -m pip install --quiet --no-warn-script-location\
-          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          \ 'kfp==2.14.3' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
           3.9\"' && \"$0\" \"$@\"\n"
         - sh
         - -ec
@@ -237,7 +237,7 @@ deploymentSpec:
           \ *\n\ndef register_vector_store_and_files(\n    service_url: str,\n   \
           \ vector_store_name: str,\n    embedding_model_id: str,\n    max_tokens:\
           \ int,\n    chunk_overlap_tokens: int,\n    base_url: str,\n    pdf_filenames:\
-          \ str\n):\n    import io\n    import requests\n    from llama_stack_client\
+          \ str,\n):\n    import io\n    import requests\n    from llama_stack_client\
           \ import LlamaStackClient\n\n    client = LlamaStackClient(base_url=service_url)\n\
           \n    # Upload all files first and collect file_ids\n    file_ids = []\n\
           \    for filename in pdf_filenames.split(\",\"):\n        source = f\"{base_url}/{filename.strip()}\"\
@@ -248,7 +248,7 @@ deploymentSpec:
           \            file_basename = source.split(\"/\")[-1]\n\n            # Upload\
           \ file to storage\n            file = client.files.create(\n           \
           \     file=(file_basename, file_content, \"application/pdf\"),\n       \
-          \         purpose=\"assistants\"\n            )\n            file_ids.append(file.id)\n\
+          \         purpose=\"assistants\",\n            )\n            file_ids.append(file.id)\n\
           \            print(f\"Successfully uploaded {file_basename} (file_id: {file.id})\"\
           )\n\n        except Exception as e:\n            print(f\"ERROR: Failed\
           \ to upload {filename.strip()}: {str(e)}\")\n            raise\n\n    print(f\"\
@@ -265,15 +265,15 @@ deploymentSpec:
           \            file_ids=file_ids,\n            chunking_strategy={\n     \
           \           \"type\": \"static\",\n                \"static\": {\n     \
           \               \"max_chunk_size_tokens\": max_tokens,\n               \
-          \     \"chunk_overlap_tokens\": chunk_overlap_tokens\n                }\n\
+          \     \"chunk_overlap_tokens\": chunk_overlap_tokens,\n                },\n\
           \            },\n            extra_body={\n                \"embedding_model\"\
           : embedding_model_id,\n                \"embedding_dimension\": embedding_dimension,\n\
-          \                \"provider_id\": \"milvus\"\n            }\n        )\n\
-          \        print(f\"Successfully created vector store '{vector_store_name}'\
-          \ with ID: {vector_store.id}\")\n        print(f\"Vector store details:\
-          \ {vector_store}\")\n    except Exception as e:\n        print(f\"ERROR:\
-          \ Failed to create vector store '{vector_store_name}': {str(e)}\")\n   \
-          \     raise\n\n"
+          \                \"provider_id\": \"milvus\",\n            },\n        )\n\
+          \        print(\n            f\"Successfully created vector store '{vector_store_name}'\
+          \ with ID: {vector_store.id}\"\n        )\n        print(f\"Vector store\
+          \ details: {vector_store}\")\n    except Exception as e:\n        print(f\"\
+          ERROR: Failed to create vector store '{vector_store_name}': {str(e)}\")\n\
+          \        raise\n\n"
         image: quay.io/modh/odh-pipeline-runtime-pytorch-cuda-py312-ubi9@sha256:72ff2381e5cb24d6f549534cb74309ed30e92c1ca80214669adb78ad30c5ae12
         resources:
           accelerator:
@@ -303,7 +303,7 @@ deploymentSpec:
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'llama-stack-client'\
           \ 'fire' 'requests'  &&  python3 -m pip install --quiet --no-warn-script-location\
-          \ 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          \ 'kfp==2.14.3' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
           3.9\"' && \"$0\" \"$@\"\n"
         - sh
         - -ec
@@ -319,7 +319,7 @@ deploymentSpec:
           \ *\n\ndef register_vector_store_and_files(\n    service_url: str,\n   \
           \ vector_store_name: str,\n    embedding_model_id: str,\n    max_tokens:\
           \ int,\n    chunk_overlap_tokens: int,\n    base_url: str,\n    pdf_filenames:\
-          \ str\n):\n    import io\n    import requests\n    from llama_stack_client\
+          \ str,\n):\n    import io\n    import requests\n    from llama_stack_client\
           \ import LlamaStackClient\n\n    client = LlamaStackClient(base_url=service_url)\n\
           \n    # Upload all files first and collect file_ids\n    file_ids = []\n\
           \    for filename in pdf_filenames.split(\",\"):\n        source = f\"{base_url}/{filename.strip()}\"\
@@ -330,7 +330,7 @@ deploymentSpec:
           \            file_basename = source.split(\"/\")[-1]\n\n            # Upload\
           \ file to storage\n            file = client.files.create(\n           \
           \     file=(file_basename, file_content, \"application/pdf\"),\n       \
-          \         purpose=\"assistants\"\n            )\n            file_ids.append(file.id)\n\
+          \         purpose=\"assistants\",\n            )\n            file_ids.append(file.id)\n\
           \            print(f\"Successfully uploaded {file_basename} (file_id: {file.id})\"\
           )\n\n        except Exception as e:\n            print(f\"ERROR: Failed\
           \ to upload {filename.strip()}: {str(e)}\")\n            raise\n\n    print(f\"\
@@ -347,15 +347,15 @@ deploymentSpec:
           \            file_ids=file_ids,\n            chunking_strategy={\n     \
           \           \"type\": \"static\",\n                \"static\": {\n     \
           \               \"max_chunk_size_tokens\": max_tokens,\n               \
-          \     \"chunk_overlap_tokens\": chunk_overlap_tokens\n                }\n\
+          \     \"chunk_overlap_tokens\": chunk_overlap_tokens,\n                },\n\
           \            },\n            extra_body={\n                \"embedding_model\"\
           : embedding_model_id,\n                \"embedding_dimension\": embedding_dimension,\n\
-          \                \"provider_id\": \"milvus\"\n            }\n        )\n\
-          \        print(f\"Successfully created vector store '{vector_store_name}'\
-          \ with ID: {vector_store.id}\")\n        print(f\"Vector store details:\
-          \ {vector_store}\")\n    except Exception as e:\n        print(f\"ERROR:\
-          \ Failed to create vector store '{vector_store_name}': {str(e)}\")\n   \
-          \     raise\n\n"
+          \                \"provider_id\": \"milvus\",\n            },\n        )\n\
+          \        print(\n            f\"Successfully created vector store '{vector_store_name}'\
+          \ with ID: {vector_store.id}\"\n        )\n        print(f\"Vector store\
+          \ details: {vector_store}\")\n    except Exception as e:\n        print(f\"\
+          ERROR: Failed to create vector store '{vector_store_name}': {str(e)}\")\n\
+          \        raise\n\n"
         image: quay.io/modh/odh-pipeline-runtime-pytorch-cuda-py312-ubi9@sha256:72ff2381e5cb24d6f549534cb74309ed30e92c1ca80214669adb78ad30c5ae12
         resources:
           cpuLimit: 4.0
@@ -424,12 +424,12 @@ root:
         isOptional: true
         parameterType: STRING
       service_url:
-        defaultValue: http://lsd-llama-milvus-service:8321
+        defaultValue: http://redbank-lsd-service:8321
         description: URL of the Milvus service
         isOptional: true
         parameterType: STRING
       use_gpu:
-        defaultValue: true
+        defaultValue: false
         description: Enable GPU usage for embedding generation
         isOptional: true
         parameterType: BOOLEAN
@@ -439,7 +439,7 @@ root:
         isOptional: true
         parameterType: STRING
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.14.6
+sdkVersion: kfp-2.14.3
 ---
 platforms:
   kubernetes:

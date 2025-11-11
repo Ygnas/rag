@@ -117,11 +117,11 @@ def vector_store_files_pipeline(
     base_url: str = "https://raw.githubusercontent.com/ChristianZaccaria/redbank-kb/main",
     pdf_filenames: str = "redbankfinancial_about.pdf, redbankfinancial_faq.pdf",
     vector_store_name: str = "redbank-kb-vector-store",
-    service_url: str = "http://lsd-llama-milvus-service:8321",
+    service_url: str = "http://redbank-lsd-service:8321",
     embedding_model_id: str = "ibm-granite/granite-embedding-125m-english",
     max_tokens: int = 512,
     chunk_overlap_tokens: int = 64,
-    use_gpu: bool = True,
+    use_gpu: bool = False,
 ):
     """
     Creates a vector store with embeddings from PDF files from a GitHub source.

@@ -100,26 +100,6 @@ See the `llama-stack-k8s-operator` running in the `redhat-ods-applications` name
 
 ---
 
-### Update KServe
-
-**Steps:**
-
-1. In the RHOAI DSC custom resource, under the `kserve` section, set `rawDeploymentServiceConfig` to `Headed`:
-
-```yaml
-kserve:
-  managementState: Managed
-  nim:
-    managementState: Managed
-  rawDeploymentServiceConfig: Headed
-```
-
-**Verification:**
-
-See the `kserve-controller-manager` running in the `redhat-ods-applications` namespace.
-
----
-
 ## Create and Configure a Data Science Project
 
 **Steps:**
@@ -207,7 +187,6 @@ Wait until all pods are fully running in the `redbank-demo` namespace.
 3. On the top-right corner click on the Actions dropdown, and select Create run.
 4. Configure the pipeline run, and the rest can be left as defaults:
    - **Name:** `redbank-kb-run`
-   - **use_gpu:** False (unless you have additional NVIDIA GPUs available)
 5. Click on Create run.
 6. Wait for the pipeline run to complete.
 
