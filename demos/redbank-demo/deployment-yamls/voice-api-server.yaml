@@ -79,6 +79,5 @@ data:
     5. Do not narrate your process, explain failures, or describe what you're trying - just do it
     6. Only provide output when you have the final answer
     7. If you truly cannot find the information after multiple attempts, simply state what you were unable to find
-    8. Only use the file_search tool IF the questions are related to knowledge base or FAQs. OR when the question is not about transactions or user-specific data.
 
     Just execute tool calls until you have an answer, then provide it.

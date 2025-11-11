@@ -29,7 +29,6 @@ MODEL_INSTRUCTIONS = """
     5. Do not narrate your process, explain failures, or describe what you're trying - just do it
     6. Only provide output when you have the final answer
     7. If you truly cannot find the information after multiple attempts, simply state what you were unable to find
-    8. Only use the file_search tool IF the questions are related to knowledge base or FAQs. OR when the question is not about transactions or user-specific data.
 
     Just execute tool calls until you have an answer, then provide it.
 """
@@ -77,7 +76,7 @@ class ResponseService:
         # Add user message to conversation history
         self.conversation_history.append({"role": "user", "content": prompt})
         try:
-            resp_stream = self.client.responses.create(
+            resp = self.client.responses.create(
                 model=self.model,
                 instructions=model_instructions,
                 tools=[
@@ -95,66 +94,14 @@ class ResponseService:
                         ],
                     },
                 ],
-                input=prompt,
-                stream=True,
+                input=self.conversation_history,
+                stream=False,
             )
 
-            # Process the streaming response to extract the full text
-            final_text = None
-            completed_response = None
-
-            for chunk in resp_stream:
-                # Check for completed response event - this has the full response object
-                if hasattr(chunk, "type") and chunk.type == "response.completed":
-                    if hasattr(chunk, "response") and chunk.response:
-                        completed_response = chunk.response
-
-                # Check for content_part.done events which contain the full text for each part
-                if (
-                    hasattr(chunk, "type")
-                    and chunk.type == "response.content_part.done"
-                ):
-                    if hasattr(chunk, "part") and chunk.part:
-                        part = chunk.part
-                        # The part has a text attribute that is the full text string
-                        if hasattr(part, "text") and part.text:
-                            if isinstance(part.text, str):
-                                final_text = part.text
-                            elif hasattr(part.text, "text") and part.text.text:
-                                final_text = part.text.text
-
-            # Extract text from completed response if we haven't found it yet
-            if not final_text and completed_response:
-                if hasattr(completed_response, "output") and completed_response.output:
-                    for output_item in completed_response.output:
-                        # Look for message type output items with content
-                        if hasattr(output_item, "content") and output_item.content:
-                            for content_item in output_item.content:
-                                # Check if it's an output_text type with text attribute
-                                if (
-                                    hasattr(content_item, "type")
-                                    and content_item.type == "output_text"
-                                ):
-                                    if (
-                                        hasattr(content_item, "text")
-                                        and content_item.text
-                                    ):
-                                        if isinstance(content_item.text, str):
-                                            final_text = content_item.text
-                                            break
-                                        elif hasattr(content_item.text, "text"):
-                                            final_text = content_item.text.text
-                                            break
-                            if final_text:
-                                break
-
-            if final_text:
-                self.conversation_history.append(
-                    {"role": "assistant", "content": final_text}
-                )
-                return {"output": final_text}
-            else:
-                return {"output": "No response text found in stream"}
+            self.conversation_history.append(
+                {"role": "assistant", "content": resp.output_text}
+            )
+            return {"output": resp.output_text}
 
         except Exception as e:
             print(f"Response error: {e}")

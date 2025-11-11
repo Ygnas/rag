@@ -16,7 +16,7 @@ from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 import base64
 from ..services.whisper_svc import WhisperService
-from ..services.agent_svc import ResponseService
+from ..services.responses_svc import ResponseService
 from ..services.tts_svc import TTSService
 from ..deps import get_logger
 from ..config import settings
