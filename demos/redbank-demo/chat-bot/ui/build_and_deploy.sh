@@ -34,9 +34,6 @@ function setup() {
   oc new-build --name build-redbank-chat-ui --binary --strategy docker --to=image-registry.openshift-image-registry.svc:5000/redbank-demo/redbank-chat-ui:latest
   oc start-build build-redbank-chat-ui --from-dir=. --follow
 
-  _out Deploying Chat UI
-  oc apply -f ../deployment-yamls/chat-ui.yaml
-
   _out Done deploying redbank-chat-ui
 }
 

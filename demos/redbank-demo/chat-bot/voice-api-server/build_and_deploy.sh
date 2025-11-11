@@ -34,9 +34,6 @@ function setup() {
   oc new-build --name build-redbank-voice-api-server --binary --strategy docker --to=image-registry.openshift-image-registry.svc:5000/redbank-demo/redbank-voice-api-server:latest
   oc start-build build-redbank-voice-api-server --from-dir=. --follow
 
-  _out Deploying voice API server
-  oc apply -f ../deployment-yamls/voice-api-server.yaml
-
   _out Done deploying redbank-voice-api-server
 }
 
