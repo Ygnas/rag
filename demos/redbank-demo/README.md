@@ -4,9 +4,9 @@
 
 This demo showcases how to build an end-to-end AI assistant on Red Hat OpenShift AI (RHOAI) using Llama Stack and KServe.
 
-It covers document ingestion and vectorization, model registration, Retrieval-Augmented Generation (RAG), speech-to-text (STT) with Whisper, and text-to-speech (TTS) with Kokoro.
+It covers document ingestion and vectorization, model registration, Retrieval-Augmented Generation (RAG), speech-to-text (STT) with Whisper, text-to-speech (TTS) with Kokoro, and MCP tooling for accessing customer data in PostgreSQL.
 
-By the end, you'll have a fully working “Red Bank Assistant” capable of understanding questions, retrieving answers from internal documents, and responding with natural speech.
+By the end, you'll have a fully working “Red Bank Assistant” ChatBot UI capable of understanding questions, retrieving answers from internal documents or customer data, and responding with natural speech.
 
 This guide assumes RHOAI 3.0+ is installed on an OpenShift 4.19.9+ cluster.
 
@@ -26,9 +26,10 @@ This guide assumes RHOAI 3.0+ is installed on an OpenShift 4.19.9+ cluster.
   - [Create AWS S3 Bucket](#create-aws-s3-bucket)
   - [Create Data Science Pipeline Server](#create-data-science-pipeline-server)
   - [Create a Pipeline](#create-a-pipeline)
-- [Deploy STT, TTS, and Qwen-2.5:7b AI models](#deploy-stt-tts-and-qwen-257b-ai-models)
+- [Deploy AI Models (STT / TTS / Qwen-2.5:7b), MCP + PostgreSQL, ChatBot UI, and Llama Stack Server](#deploy-ai-models-stt--tts--qwen-257b-mcp--postgresql-chatbot-ui-and-llama-stack-server)
 - [Run the Data Science Pipeline to create Red Bank knowledge base](#run-the-data-science-pipeline-to-create-red-bank-knowledge-base)
-- [See RAG and MCP tooling in action with your TTS, STT, and Qwen-2.5:7b AI models](#see-rag-and-mcp-tooling-in-action-with-your-tts-stt-and-qwen-257b-ai-models)
+- [Verify all models, RAG, and MCP tool functionality](#verify-all-models-rag-and-mcp-tool-functionality)
+- [Play with the Red Bank Demo ChatBot UI](#play-with-the-red-bank-demo-chatbot-ui)
 
 ---
 
@@ -162,10 +163,9 @@ To create a Data Science Pipeline, we need to set up an AWS S3 bucket to store p
 
 ---
 
-## Deploy STT, TTS, and Qwen-2.5:7b AI models + MCP Server and PostgreSQL
+## Deploy AI Models (STT / TTS / Qwen-2.5:7b), MCP + PostgreSQL, ChatBot UI, and Llama Stack Server
 
-> **Note:** The Qwen-2.5:7b model runs on 1 GPU. We are using a `g5.2xlarge` node (A10g NVIDIA GPU), and the Whisper (STT) model
-and Kokoro (TTS) model each run on 1 `g4dn.xlarge` node (NVIDIA T4 GPU)
+> **Note:** All models use 1 GPU each. This demo has been tested with 3 `g5.2xlarge` nodes (A10g NVIDIA GPU), but might work with other NVIDIA GPU instances.
 
 **Steps:**
 
@@ -192,10 +192,16 @@ Wait until all pods are fully running in the `redbank-demo` namespace.
 
 ---
 
-## See RAG and MCP tooling in action with your TTS, STT, and Qwen-2.5:7b AI models
+## Verify all models, RAG, and MCP tool functionality
 
 **Steps:**
 1. Go to the Red Hat OpenShift AI dashboard, and go into your workbench. This will open your JupyterNotebook environment.
 2. Upload the `notebook` directory to your JupyterNotebook environment.
-3. Open the `redbank_notebook.ipynb` file and run through all cells to test out all your models and RAG.
-4. RAG retrieval will be performed, and the LLM should accurately answer the question based on our documents.
+3. Open the `redbank_notebook.ipynb` file and run through all cells to validate the models, RAG flow, and MCP tool calls.
+
+---
+
+## Play with the Red Bank Demo ChatBot UI
+1. In the OpenShift Console, go to `Networking` -> `Routes`.
+2. Find the `chat-ui-route` entry and open its URL.
+3. Try the ChatBot UI.

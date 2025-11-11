@@ -114,7 +114,7 @@ def register_vector_store_and_files(
 
 @dsl.pipeline()
 def vector_store_files_pipeline(
-    base_url: str = "https://raw.githubusercontent.com/ChristianZaccaria/redbank-kb/main",
+    base_url: str = "https://raw.githubusercontent.com/opendatahub-io/rag/redbank/demos/redbank-demo/pdf",
     pdf_filenames: str = "redbankfinancial_about.pdf, redbankfinancial_faq.pdf",
     vector_store_name: str = "redbank-kb-vector-store",
     service_url: str = "http://redbank-lsd-service:8321",
