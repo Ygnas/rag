@@ -2,7 +2,7 @@
 # Name: vector-store-files-pipeline
 # Description: Creates a vector store with embeddings from PDF files from a GitHub source.
 # Inputs:
-#    base_url: str [Default: 'https://raw.githubusercontent.com/ChristianZaccaria/redbank-kb/main']
+#    base_url: str [Default: 'https://raw.githubusercontent.com/opendatahub-io/rag/redbank/demos/redbank-demo/pdf']
 #    chunk_overlap_tokens: int [Default: 64.0]
 #    embedding_model_id: str [Default: 'ibm-granite/granite-embedding-125m-english']
 #    max_tokens: int [Default: 512.0]
@@ -399,7 +399,7 @@ root:
   inputDefinitions:
     parameters:
       base_url:
-        defaultValue: https://raw.githubusercontent.com/ChristianZaccaria/redbank-kb/main
+        defaultValue: https://raw.githubusercontent.com/opendatahub-io/rag/redbank/demos/redbank-demo/pdf
         description: Base URL to fetch PDF files from
         isOptional: true
         parameterType: STRING
