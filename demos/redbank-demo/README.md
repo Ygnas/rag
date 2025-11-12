@@ -41,9 +41,8 @@ This guide assumes RHOAI 3.0+ is installed on an OpenShift 4.19.9+ cluster.
 
 1. Go to the Openshift cluster console.
 2. Under `<your-cluster>` → Machine pools, click "Add machine pool".
-3. Add a name, and in "Compute node instance type" scroll all way down and search for `g5.2xlarge`.
+3. Add a name, and in "Compute node instance type" scroll all way down and search for `g5.2xlarge`. This demo has been tested with 3 `g5.2xlarge` nodes (A10g NVIDIA GPU), but might work with other NVIDIA GPU instances.
 4. Click on Add machine pool.
-5. Repeat the steps above to provision 2 `g4dn.xlarge` GPUs. These will be used for the STT Whisper model and TTS Kokoro model during this demo.
 
 ---
 
