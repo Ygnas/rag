@@ -71,6 +71,7 @@ spec:
         - --enable-auto-tool-choice
         - --tool-call-parser=hermes
         - --gpu-memory-utilization=0.90
+        - --reasoning-parser=qwen3
       modelFormat:
         name: vLLM
       name: ""
