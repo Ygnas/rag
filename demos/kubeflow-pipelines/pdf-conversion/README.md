@@ -4,6 +4,8 @@
 
 This pipeline converts your PDF documents from a GitHub source to text chunks, generates embeddings with a SentenceTransformer model, and inserts those embeddings into your vector store via Llama Stack for efficient vector search. It’s designed to run on Kubeflow Pipelines with GPU acceleration support.
 
+> Note: This demo was tested using the default KServe behavior on OpenShift AI (`Headless` RawDeployment). If you are using `Headed` mode, change the `VLLM_URL` port to `80` in the [llamastackdistribution.yaml](../../common-deployments/llamastackdistribution.yaml).
+
 ## Prerequisites
 
 - Red Hat OpenShift AI v3.0+
