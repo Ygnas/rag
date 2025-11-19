@@ -6,10 +6,12 @@ This pipeline converts your PDF documents from a GitHub source to text chunks, g
 
 ## Prerequisites
 
-- Red Hat OpenShift AI v3.0
+- Red Hat OpenShift AI v3.0+
 - Data science project created with a configured pipeline server and workbench with Python 3.12.
-- [LlamaStack Operator](https://github.com/opendatahub-io/llama-stack-k8s-operator) enabled in the DSC resource
-- LlamaStackDistribution custom resource [configured](../../../stack/README.md) with the llama-3.2:3b instruct model. Alternatively, you can use your own instruct model.
+- LlamaStack Operator enabled in the DSC resource. See [Working with Llama Stack](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.0/html/working_with_llama_stack/index).
+- LlamaStackDistribution deployed and configured with the `qwen3-14b-awq` instruct model:
+    - See [common-deployments](../../common-deployments). Apply the Qwen3 model first, and once it's ready, apply the llamastackdistribution resource.
+    - Alternatively, you can use your own instruct model.
 - 1–2 NVIDIA GPUs (one for the instruct model, and optionally one for the pipeline run)
 
 ## Import and run the KubeFlow Pipeline
@@ -31,4 +33,4 @@ When running the pipeline, you can customize the following parameters:
 
 ## Prompt the LLM
 
-Once your documents are embedded and indexed, you can query them by running through the example notebook [llama_stack_rag.ipynb](llama_stack_rag.ipynb)
+Once your documents are embedded and indexed, you can query them by running through the example notebook [pdf_llama_stack_rag.ipynb](pdf_llama_stack_rag.ipynb)

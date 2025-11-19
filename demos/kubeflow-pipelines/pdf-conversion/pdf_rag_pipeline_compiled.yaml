@@ -7,7 +7,7 @@
 #    embedding_model_id: str [Default: 'ibm-granite/granite-embedding-125m-english']
 #    max_tokens: int [Default: 512.0]
 #    pdf_filenames: str [Default: '2203.01017v2.pdf, 2206.01062.pdf, 2305.03393v1-pg9.pdf, amt_handbook_sample.pdf, code_and_formula.pdf, multi_page.pdf, picture_classification.pdf, redp5110_sampled.pdf, right_to_left_01.pdf, right_to_left_02.pdf, right_to_left_03.pdf']
-#    service_url: str [Default: 'http://lsd-llama-milvus-service:8321']
+#    service_url: str [Default: 'http://lsd-milvus-service:8321']
 #    use_gpu: bool [Default: False]
 #    vector_store_name: str [Default: 'pdf-vector-store']
 components:
@@ -262,20 +262,28 @@ deploymentSpec:
           \ model\")\n\n    embedding_dimension = matching_model.metadata[\"embedding_dimension\"\
           ]\n\n    # Warm up the embedding model\n    client.embeddings.create(\n\
           \        model=embedding_model_id,\n        input=\"warmup\",\n    )\n\n\
-          \    # Create vector store from uploaded files\n    try:\n        vector_store\
-          \ = client.vector_stores.create(\n            name=vector_store_name,\n\
-          \            file_ids=file_ids,\n            chunking_strategy={\n     \
-          \           \"type\": \"static\",\n                \"static\": {\n     \
-          \               \"max_chunk_size_tokens\": max_tokens,\n               \
-          \     \"chunk_overlap_tokens\": chunk_overlap_tokens,\n                },\n\
-          \            },\n            extra_body={\n                \"embedding_model\"\
+          \    # Create empty vector store first, before inserting files.\n    # Purpose:\
+          \ Depending on the size and number of files, attempting to create the vector\
+          \ store\n    # and add files in a single step may lead to timeouts.\n  \
+          \  try:\n        vector_store = client.vector_stores.create(\n         \
+          \   name=vector_store_name,\n            file_ids=[],\n            chunking_strategy={\n\
+          \                \"type\": \"static\",\n                \"static\": {\n\
+          \                    \"max_chunk_size_tokens\": max_tokens,\n          \
+          \          \"chunk_overlap_tokens\": chunk_overlap_tokens,\n           \
+          \     },\n            },\n            extra_body={\n                \"embedding_model\"\
           : embedding_model_id,\n                \"embedding_dimension\": embedding_dimension,\n\
           \                \"provider_id\": \"milvus\",\n            },\n        )\n\
           \        print(\n            f\"Successfully created vector store '{vector_store_name}'\
-          \ with ID: {vector_store.id}\"\n        )\n        print(f\"Vector store\
-          \ details: {vector_store}\")\n    except Exception as e:\n        print(f\"\
-          ERROR: Failed to create vector store '{vector_store_name}': {str(e)}\")\n\
-          \        raise\n\n"
+          \ with ID: {vector_store.id}\"\n        )\n    except Exception as e:\n\
+          \        print(f\"ERROR: Failed to create vector store '{vector_store_name}':\
+          \ {str(e)}\")\n        raise\n\n    # Add files to vector store\n    try:\n\
+          \        for file_id in file_ids:\n            print(f\"Adding file_id '{file_id}'\
+          \ to vector store '{vector_store_name}'\")\n            client.vector_stores.files.create(\n\
+          \                vector_store_id=vector_store.id,\n                file_id=file_id,\n\
+          \            )\n        vector_store = client.vector_stores.retrieve(vector_store.id)\n\
+          \        print(f\"Vector store details: {vector_store}\")\n    except Exception\
+          \ as e:\n        print(f\"WARNING: Some files failed to be added to vector\
+          \ store: {str(e)}\")\n\n"
         image: quay.io/modh/odh-pipeline-runtime-pytorch-cuda-py312-ubi9@sha256:72ff2381e5cb24d6f549534cb74309ed30e92c1ca80214669adb78ad30c5ae12
         resources:
           accelerator:
@@ -346,20 +354,28 @@ deploymentSpec:
           \ model\")\n\n    embedding_dimension = matching_model.metadata[\"embedding_dimension\"\
           ]\n\n    # Warm up the embedding model\n    client.embeddings.create(\n\
           \        model=embedding_model_id,\n        input=\"warmup\",\n    )\n\n\
-          \    # Create vector store from uploaded files\n    try:\n        vector_store\
-          \ = client.vector_stores.create(\n            name=vector_store_name,\n\
-          \            file_ids=file_ids,\n            chunking_strategy={\n     \
-          \           \"type\": \"static\",\n                \"static\": {\n     \
-          \               \"max_chunk_size_tokens\": max_tokens,\n               \
-          \     \"chunk_overlap_tokens\": chunk_overlap_tokens,\n                },\n\
-          \            },\n            extra_body={\n                \"embedding_model\"\
+          \    # Create empty vector store first, before inserting files.\n    # Purpose:\
+          \ Depending on the size and number of files, attempting to create the vector\
+          \ store\n    # and add files in a single step may lead to timeouts.\n  \
+          \  try:\n        vector_store = client.vector_stores.create(\n         \
+          \   name=vector_store_name,\n            file_ids=[],\n            chunking_strategy={\n\
+          \                \"type\": \"static\",\n                \"static\": {\n\
+          \                    \"max_chunk_size_tokens\": max_tokens,\n          \
+          \          \"chunk_overlap_tokens\": chunk_overlap_tokens,\n           \
+          \     },\n            },\n            extra_body={\n                \"embedding_model\"\
           : embedding_model_id,\n                \"embedding_dimension\": embedding_dimension,\n\
           \                \"provider_id\": \"milvus\",\n            },\n        )\n\
           \        print(\n            f\"Successfully created vector store '{vector_store_name}'\
-          \ with ID: {vector_store.id}\"\n        )\n        print(f\"Vector store\
-          \ details: {vector_store}\")\n    except Exception as e:\n        print(f\"\
-          ERROR: Failed to create vector store '{vector_store_name}': {str(e)}\")\n\
-          \        raise\n\n"
+          \ with ID: {vector_store.id}\"\n        )\n    except Exception as e:\n\
+          \        print(f\"ERROR: Failed to create vector store '{vector_store_name}':\
+          \ {str(e)}\")\n        raise\n\n    # Add files to vector store\n    try:\n\
+          \        for file_id in file_ids:\n            print(f\"Adding file_id '{file_id}'\
+          \ to vector store '{vector_store_name}'\")\n            client.vector_stores.files.create(\n\
+          \                vector_store_id=vector_store.id,\n                file_id=file_id,\n\
+          \            )\n        vector_store = client.vector_stores.retrieve(vector_store.id)\n\
+          \        print(f\"Vector store details: {vector_store}\")\n    except Exception\
+          \ as e:\n        print(f\"WARNING: Some files failed to be added to vector\
+          \ store: {str(e)}\")\n\n"
         image: quay.io/modh/odh-pipeline-runtime-pytorch-cuda-py312-ubi9@sha256:72ff2381e5cb24d6f549534cb74309ed30e92c1ca80214669adb78ad30c5ae12
         resources:
           cpuLimit: 4.0
@@ -430,7 +446,7 @@ root:
         isOptional: true
         parameterType: STRING
       service_url:
-        defaultValue: http://lsd-llama-milvus-service:8321
+        defaultValue: http://lsd-milvus-service:8321
         description: URL of the Milvus service
         isOptional: true
         parameterType: STRING

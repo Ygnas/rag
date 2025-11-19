@@ -92,11 +92,13 @@ def register_vector_store_and_files(
         input="warmup",
     )
 
-    # Create vector store from uploaded files
+    # Create empty vector store first, before inserting files.
+    # Purpose: Depending on the size and number of files, attempting to create the vector store
+    # and add files in a single step may lead to timeouts.
     try:
         vector_store = client.vector_stores.create(
             name=vector_store_name,
-            file_ids=file_ids,
+            file_ids=[],
             chunking_strategy={
                 "type": "static",
                 "static": {
@@ -113,10 +115,22 @@ def register_vector_store_and_files(
         print(
             f"Successfully created vector store '{vector_store_name}' with ID: {vector_store.id}"
         )
-        print(f"Vector store details: {vector_store}")
     except Exception as e:
         print(f"ERROR: Failed to create vector store '{vector_store_name}': {str(e)}")
         raise
+
+    # Add files to vector store
+    try:
+        for file_id in file_ids:
+            print(f"Adding file_id '{file_id}' to vector store '{vector_store_name}'")
+            client.vector_stores.files.create(
+                vector_store_id=vector_store.id,
+                file_id=file_id,
+            )
+        vector_store = client.vector_stores.retrieve(vector_store.id)
+        print(f"Vector store details: {vector_store}")
+    except Exception as e:
+        print(f"WARNING: Some files failed to be added to vector store: {str(e)}")
 
 
 @dsl.pipeline()
@@ -124,7 +138,7 @@ def vector_store_files_pipeline(
     base_url: str = "https://raw.githubusercontent.com/docling-project/docling/v2.62.0/tests/data/pdf",
     pdf_filenames: str = "2203.01017v2.pdf, 2206.01062.pdf, 2305.03393v1-pg9.pdf, amt_handbook_sample.pdf, code_and_formula.pdf, multi_page.pdf, picture_classification.pdf, redp5110_sampled.pdf, right_to_left_01.pdf, right_to_left_02.pdf, right_to_left_03.pdf",
     vector_store_name: str = "pdf-vector-store",
-    service_url: str = "http://lsd-llama-milvus-service:8321",
+    service_url: str = "http://lsd-milvus-service:8321",
     embedding_model_id: str = "ibm-granite/granite-embedding-125m-english",
     max_tokens: int = 512,
     chunk_overlap_tokens: int = 64,

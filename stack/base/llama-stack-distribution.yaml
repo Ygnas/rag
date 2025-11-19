@@ -18,14 +18,17 @@ spec:
         - name: INFERENCE_MODEL
           value: vllm
         - name: VLLM_URL
-          value: http://vllm-predictor/v1
+          value: http://vllm-predictor:8080/v1
         - name: MILVUS_DB_PATH
-          value: ~/.llama/milvus.db
-        - name: FMS_ORCHESTRATOR_URL
-          value: "http://localhost"
+          value: /.llama/distributions/remote-vllm/milvus.db
       name: llama-stack
       port: 8321
     distribution:
       name: rh-dev
-    storage:
-      size: "5Gi"
+    podOverrides:
+      volumeMounts:
+        - mountPath: /opt/app-root/src/.llama
+          name: llama-storage
+      volumes:
+        - emptyDir: {}
+          name: llama-storage
