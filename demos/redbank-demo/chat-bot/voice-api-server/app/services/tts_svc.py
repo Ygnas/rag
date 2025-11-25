@@ -16,16 +16,40 @@ import io
 import wave
 import struct
 import math
+import openai
+import httpx
 
 
 class TTSService:
-    def __init__(self, url, route, voice):
+    def __init__(self, url, route=None, voice=None):
         self.url = url
-        self.route = route
-        self.voice = voice
+        # Use the same speaker as the working tts.py implementation
+        self.speaker = voice if voice else "af_sky+af_bella"
 
     def synthesize(self, text):
-        """Generate a simple sine wave audio for the given text"""
+        """Generate speech audio from text using the TTS service"""
+        try:
+            unverified_client = httpx.Client(verify=False)
+
+            client = openai.OpenAI(
+                base_url=self.url,
+                api_key="not-needed",
+                http_client=unverified_client,
+            )
+
+            with client.audio.speech.with_streaming_response.create(
+                model="kokoro", voice=self.speaker, input=text
+            ) as response:
+                # Read the audio data into bytes
+                audio_data = b"".join(response.iter_bytes())
+                return audio_data
+        except Exception as e:
+            # Fallback to simple sine wave if TTS service fails
+            print(f"TTS service error: {e}, falling back to placeholder audio")
+            return self._generate_placeholder_audio(text)
+
+    def _generate_placeholder_audio(self, text):
+        """Generate a simple sine wave audio as a fallback"""
         # Generate a 2-second sine wave at 440 Hz as a placeholder
         sample_rate = 22050
         duration = 2.0

@@ -17,20 +17,6 @@ from flask_cors import CORS
 import requests
 import base64
 import os
-import io
-import wave
-import struct
-import math
-
-# Try to import Voicify, fall back to simple TTS if not available
-try:
-    from tts import TextToSpeech
-
-    VOICIFY_AVAILABLE = True
-    KOKORO_URL = os.getenv("KOKORO_URL", "")
-except ImportError:
-    VOICIFY_AVAILABLE = False
-    print("Voicify not available, using simple TTS fallback")
 
 app = Flask(__name__)
 CORS(app)
@@ -52,52 +38,24 @@ DEFAULT_MOCK_TEXT = "This is a mock AI response"
 
 
 def text_to_speech(text):
-    """Generate speech audio from text and save to output.wav"""
+    """Generate speech audio from text using the voice-api-server TTS service"""
     try:
-        if VOICIFY_AVAILABLE:
-            # Use Voicify TTS
-            tts_engine = TextToSpeech(kokoro_url=KOKORO_URL)
-            tts_engine.write_voice(text)  # This writes output.wav
+        # Call the voice-api-server speak endpoint
+        response = requests.post(VOICE_API_ENDPOINTS["speak"], params={"text": text})
 
-            # Read the generated file
+        if response.status_code == 200:
+            # Save to output.wav for compatibility
+            audio_data = response.content
             if os.path.exists("output.wav"):
-                with open("output.wav", "rb") as f:
-                    audio_data = f.read()
-                return audio_data
-            else:
-                print("Voicify did not generate output.wav")
-                return None
-        else:
-            # Fallback to simple sine wave TTS
-            sample_rate = 22050
-            duration = min(
-                len(text) * 0.1, 10.0
-            )  # Duration based on text length, max 10 seconds
-            frequency = 440.0
-
-            frames = []
-            for i in range(int(sample_rate * duration)):
-                value = int(
-                    32767 * 0.3 * math.sin(2 * math.pi * frequency * i / sample_rate)
-                )
-                frames.append(struct.pack("<h", value))
-
-            # Create WAV file
-            wav_buffer = io.BytesIO()
-            with wave.open(wav_buffer, "wb") as wav_file:
-                wav_file.setnchannels(1)  # Mono
-                wav_file.setsampwidth(2)  # 16-bit
-                wav_file.setframerate(sample_rate)
-                wav_file.writeframes(b"".join(frames))
-
-            wav_buffer.seek(0)
-            audio_data = wav_buffer.getvalue()
-
-            # Save to output.wav
+                os.remove("output.wav")
             with open("output.wav", "wb") as f:
                 f.write(audio_data)
-
             return audio_data
+        else:
+            print(
+                f"TTS Error: Voice API returned status {response.status_code}: {response.text}"
+            )
+            return None
     except Exception as e:
         print(f"TTS Error: {e}")
         return None
@@ -152,17 +110,28 @@ def transcribe_audio():
 
 @app.route("/text-to-speech", methods=["POST"])
 def text_to_speech_endpoint():
-    """Mock endpoint that simulates text-to-speech - returns audio"""
+    """Text-to-speech endpoint using voice-api-server"""
     try:
         text = request.form.get("text")
         if not text:
             return jsonify({"error": "No text provided"}), 400
 
-        ## Convert text to speech
+        # Call the voice-api-server speak endpoint
+        response = requests.post(VOICE_API_ENDPOINTS["speak"], params={"text": text})
 
-        ## Send text to speech API
-        text_to_speech = TextToSpeech(kokoro_url=KOKORO_URL)
-        text_to_speech.write_voice(text)
+        if response.status_code == 200:
+            # Save to output.wav for compatibility
+            audio_data = response.content
+            with open("output.wav", "wb") as f:
+                f.write(audio_data)
+            return send_file("output.wav", mimetype="audio/wav")
+        else:
+            return jsonify(
+                {
+                    "error": f"TTS API request failed with status code: {response.status_code}",
+                    "details": response.text,
+                }
+            ), 400
     except Exception as e:
         return jsonify({"error": f"Error generating speech: {str(e)}"}), 500
 

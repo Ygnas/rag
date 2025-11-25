@@ -1,0 +1,38 @@
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.db_messages.db
+
+# WhatsApp Bot binaries and runtime files
+chat-bot/whatsapp-bot/whatsapp-bot
+chat-bot/whatsapp-bot/media/
+chat-bot/whatsapp-bot/qr_codes/
+
+# Test audio files (optional - uncomment if you want to exclude)
+# *.wav
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
