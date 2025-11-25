@@ -10,6 +10,8 @@ By the end, you'll have a fully working “Red Bank Assistant” ChatBot UI capa
 
 This guide assumes RHOAI 3.0+ is installed on an OpenShift 4.19.9+ cluster.
 
+> Note: This demo was tested using the default KServe behavior on OpenShift AI (`Headless` RawDeployment). If you are using `Headed` mode, change the `VLLM_URL` port to `80` in the [llamastackdistribution.yaml](deployment-yamls/llamastackdistribution.yaml).
+
 ---
 
 ## Table of Contents
@@ -20,7 +22,6 @@ This guide assumes RHOAI 3.0+ is installed on an OpenShift 4.19.9+ cluster.
   - [Accelerator Migration](#accelerator-migration)
 - [Update RHOAI DSC](#update-rhoai-dsc)
   - [Enable the Llama Stack K8s Operator](#enable-the-llama-stack-k8s-operator)
-  - [Update KServe](#update-kserve)
 - [Create and Configure a Data Science Project](#create-and-configure-a-data-science-project)
 - [Create Data Science Pipeline](#create-data-science-pipeline)
   - [Create AWS S3 Bucket](#create-aws-s3-bucket)

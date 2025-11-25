@@ -19,8 +19,6 @@ spec:
           value: vllm
         - name: VLLM_URL
           value: http://vllm-predictor:8080/v1
-        - name: MILVUS_DB_PATH
-          value: /.llama/distributions/remote-vllm/milvus.db
       name: llama-stack
       port: 8321
     distribution:
