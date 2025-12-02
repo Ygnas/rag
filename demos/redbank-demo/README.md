@@ -205,3 +205,31 @@ Wait until all pods are fully running in the `redbank-demo` namespace.
 1. In the OpenShift Console, go to `Networking` -> `Routes`.
 2. Find the `chat-ui-route` entry and open its URL.
 3. Try the ChatBot UI.
+
+---
+
+## Additional WhatsApp ChatBot Feature (Optional)
+
+> **Note:** This has been tested on an iPhone device.
+
+**Steps:**
+
+1. Deploy the WhatsApp bot:
+   ```bash
+   make deploy-whatsapp-bot
+   ```
+
+2. Go to the whatsapp-bot logs:
+   ```bash
+   kubectl logs -f deployment/redbank-whatsapp-bot -n redbank-demo
+   ```
+   Or if using OpenShift:
+   ```bash
+   oc logs -f deployment/redbank-whatsapp-bot -n redbank-demo
+   ```
+
+3. Open WhatsApp on your iPhone, go to Settings, and select the QR code symbol, then select the Scan Code tab.
+
+4. Scan the QR code found in the logs to connect.
+
+5. Once connected, you can interact with the Red Bank Assistant through WhatsApp by sending messages.

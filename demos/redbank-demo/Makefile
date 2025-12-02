@@ -15,11 +15,11 @@ endif
 ############ Deploy/Delete All ############
 deploy-all:
 	$(KUBECTL) create namespace $(NAMESPACE) || true
-	$(MAKE) -j deploy-qwen3-14b-awq deploy-whisper deploy-kokoro deploy-postgres-mcp deploy-voice-api deploy-chat-ui deploy-whatsapp-bot
+	$(MAKE) -j deploy-qwen3-14b-awq deploy-whisper deploy-kokoro deploy-postgres-mcp deploy-voice-api deploy-chat-ui
 	$(KUBECTL) wait --for=condition=available --timeout=1200s deployment --all -n $(NAMESPACE)
 	$(MAKE) deploy-lsd-server
 	$(KUBECTL) wait --for=condition=available --timeout=300s deployment --all -n $(NAMESPACE)
-delete-all: delete-qwen3-14b-awq delete-whisper delete-kokoro delete-postgres-mcp delete-lsd-server delete-voice-api delete-chat-ui delete-whatsapp-bot
+delete-all: delete-qwen3-14b-awq delete-whisper delete-kokoro delete-postgres-mcp delete-lsd-server delete-voice-api delete-chat-ui
 
 ############ PostgreSQL and MCP Server ############
 deploy-postgres-mcp: deploy-postgres deploy-mcp
