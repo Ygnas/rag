@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from fastapi import FastAPI
-from .routers import voice
+from .routers import voice, text
 
 app = FastAPI(
     title="Voice Processing API",
@@ -28,15 +28,24 @@ async def health_check():
         "status": "healthy",
         "service": "Voice Processing API",
         "endpoints": {
-            "transcribe": "POST /api/voice/transcribe",
-            "complete": "POST /api/voice/complete",
-            "speak": "POST /api/voice/speak",
-            "session_start": "POST /api/voice/session/start",
-            "chat": "POST /api/voice/chat",
-            "conversation_clear": "POST /api/voice/conversation/clear",
+            "voice": {
+                "transcribe": "POST /api/voice/transcribe",
+                "complete": "POST /api/voice/complete",
+                "speak": "POST /api/voice/speak",
+                "session_start": "POST /api/voice/session/start",
+                "chat": "POST /api/voice/chat",
+                "conversation_clear": "POST /api/voice/conversation/clear",
+            },
+            "text": {
+                "complete": "POST /api/text/complete",
+                "session_start": "POST /api/text/session/start",
+                "chat": "POST /api/text/chat",
+                "conversation_clear": "POST /api/text/conversation/clear",
+            },
         },
     }
 
 
 # Include routers
 app.include_router(voice.router)
+app.include_router(text.router)

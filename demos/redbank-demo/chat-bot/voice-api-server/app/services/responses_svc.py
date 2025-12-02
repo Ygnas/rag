@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from typing import Dict, Any
 from llama_stack_client import LlamaStackClient
 
-MODEL_INSTRUCTIONS = """
+_DEFAULT_MODEL_INSTRUCTIONS = """
     /no_think
     You are a helpful assistant with access to financial data through MCP tools.
 
@@ -30,9 +31,16 @@ MODEL_INSTRUCTIONS = """
     5. Do not narrate your process, explain failures, or describe what you're trying - just do it
     6. Only provide output when you have the final answer
     7. If you truly cannot find the information after multiple attempts, simply state what you were unable to find
+    8. Dates can be formatted as YYYY-MM-DD, remember to convert them into the required language.
+    9. When retrieving datas as list or tables, make them concise so they can be read as columns of a table.
 
     Just execute tool calls until you have an answer, then provide it.
 """
+
+# Allow MODEL_INSTRUCTIONS to be overridden through environment variable
+MODEL_INSTRUCTIONS = os.getenv(
+    "MODEL_INSTRUCTIONS", _DEFAULT_MODEL_INSTRUCTIONS.strip()
+)
 
 
 class ResponseService:
@@ -95,7 +103,8 @@ class ResponseService:
                         ],
                     },
                 ],
-                input=self.conversation_history,
+                # input=self.conversation_history,
+                input=prompt,
                 stream=False,
             )
 

@@ -1,0 +1,58 @@
+# Use UBI9 with Go as the base image for building
+FROM registry.redhat.io/ubi9/go-toolset:latest AS builder
+
+# Switch to root to install packages
+USER root
+
+# Install necessary packages
+RUN dnf install -y git sqlite-devel gcc && dnf clean all
+
+# Set the working directory and create it as root
+WORKDIR /app
+
+# Copy go mod files as root
+COPY go.mod go.sum ./
+
+# Copy the source code as root
+COPY . .
+
+# Change ownership of /app to user 1001
+RUN chown -R 1001:1001 /app
+
+# Switch to the default user (1001) for security
+USER 1001
+
+# Download dependencies
+RUN go mod download
+
+# Build the application
+RUN CGO_ENABLED=1 GOOS=linux go build -buildvcs=false -a -installsuffix cgo -o whatsapp-bot .
+
+# Use UBI9 minimal for the final stage
+FROM registry.redhat.io/ubi9/ubi-minimal:latest
+COPY --from=mwader/static-ffmpeg:8.0.1 /ffmpeg /usr/local/bin/
+COPY --from=mwader/static-ffmpeg:8.0.1 /ffprobe /usr/local/bin/
+# Install necessary packages
+RUN microdnf install -y sqlite ca-certificates tar gzip  && microdnf clean all
+
+# Create app directory
+WORKDIR /app
+
+# Copy the binary from builder stage
+COPY --from=builder /app/whatsapp-bot .
+
+# Create directories for data and media
+RUN mkdir -p /app/data /app/media /app/qr_codes
+
+# Set environment variables
+ENV PORT=8080
+ENV WHATSAPP_DB_PATH=/app/data/whatsapp.db
+ENV WHATSAPP_MEDIA_DIR=/app/media
+ENV QR_CODE_DIR=/app/qr_codes
+ENV LOG_LEVEL=info
+
+# Expose the port
+EXPOSE 8080
+
+# Run the application
+CMD ["./whatsapp-bot"]

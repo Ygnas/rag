@@ -1,0 +1,100 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whatsapp-bot
+  labels:
+    app: whatsapp-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whatsapp-bot
+  template:
+    metadata:
+      labels:
+        app: whatsapp-bot
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: app
+        image: image-registry.openshift-image-registry.svc:5000/redbank-demo/redbank-whatsapp-bot:latest
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 8080
+            name: http
+        env:
+          - name: PORT
+            value: "8080"
+          - name: LOG_LEVEL
+            value: "info"
+          - name: VOICE_API_BASE_URL
+            value: http://voice-api-service.redbank-demo.svc.cluster.local:80
+          - name: TTS_URL
+            value: http://kokoro-fastapi-gpu.redbank-demo.svc.cluster.local:8880/v1
+          - name: WHATSAPP_DB_PATH
+            value: /app/data/whatsapp.db
+          - name: WHATSAPP_MEDIA_DIR
+            value: /app/media
+          - name: QR_CODE_DIR
+            value: /app/qr_codes
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: whatsapp-data
+          mountPath: /app/data
+        - name: whatsapp-media
+          mountPath: /app/media
+      volumes:
+      - name: whatsapp-data
+        persistentVolumeClaim:
+          claimName: whatsapp-data-pvc
+      - name: whatsapp-media
+        persistentVolumeClaim:
+          claimName: whatsapp-media-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whatsapp-bot-service
+  labels:
+    app: whatsapp-bot-service
+spec:
+  selector:
+    app: whatsapp-bot
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: whatsapp-bot-route
+  labels:
+    app: whatsapp-bot
+spec:
+  to:
+    kind: Service
+    name: whatsapp-bot-service
+  port:
+    targetPort: http
+  tls:
+    termination: edge

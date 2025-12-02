@@ -2,7 +2,8 @@
 deploy-all delete-all deploy-whisper delete-whisper deploy-kokoro delete-kokoro \
 deploy-qwen3-14b-awq delete-qwen3-14b-awq \
 deploy-lsd-server delete-lsd-server \
-deploy-voice-api delete-voice-api deploy-chat-ui delete-chat-ui
+deploy-voice-api delete-voice-api deploy-chat-ui delete-chat-ui \
+deploy-whatsapp-bot delete-whatsapp-bot
 
 NAMESPACE := redbank-demo
 KUBECTL := kubectl
@@ -81,3 +82,14 @@ delete-chat-ui:
 	$(KUBECTL) delete -f deployment-yamls/chat-ui.yaml -n $(NAMESPACE) || true
 	$(KUBECTL) delete build build-redbank-chat-ui -n $(NAMESPACE) || true
 	$(KUBECTL) delete buildconfig build-redbank-chat-ui -n $(NAMESPACE) || true
+
+############ WhatsApp Bot ############
+deploy-whatsapp-bot:
+	cd chat-bot/whatsapp-bot && ./build_and_deploy.sh
+	$(KUBECTL) apply -f chat-bot/whatsapp-bot/openshift/pvc.yaml -n $(NAMESPACE)
+	$(KUBECTL) apply -f deployment-yamls/whatsapp-bot.yaml -n $(NAMESPACE)
+delete-whatsapp-bot:
+	$(KUBECTL) delete -f deployment-yamls/whatsapp-bot.yaml -n $(NAMESPACE) || true
+	$(KUBECTL) delete -f chat-bot/whatsapp-bot/openshift/pvc.yaml -n $(NAMESPACE) || true
+	$(KUBECTL) delete build build-redbank-whatsapp-bot -n $(NAMESPACE) || true
+	$(KUBECTL) delete buildconfig build-redbank-whatsapp-bot -n $(NAMESPACE) || true

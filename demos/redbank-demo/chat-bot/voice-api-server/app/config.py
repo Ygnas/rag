@@ -24,8 +24,8 @@ class Settings:
     )
     agent_api_key = "key"
     tts_url = os.getenv("TTS_URL", "http://localhost:8001")
-    tts_route = "/tts"
-    tts_voice = "default"
+    tts_route = "/tts"  # Not used, kept for backward compatibility
+    tts_voice = os.getenv("TTS_VOICE", "af_sky+af_bella")
     vdb_url = os.getenv("VDB_URL", "http://localhost:8002")
     inference_model = os.getenv("INFERENCE_MODEL", "vllm-inference/qwen3-14b-awq")
     vector_store_name = os.getenv("VECTOR_STORE_NAME", "redbank-kb-vector-store")

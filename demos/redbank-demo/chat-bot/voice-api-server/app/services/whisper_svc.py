@@ -89,7 +89,28 @@ class WhisperService:
         """
         self.client = OpenAI(base_url=self.whisper_url, api_key="fake")
 
-    def transcribe(self, audio_data: bytes) -> Tuple[str, float]:
+    def _get_mime_type(self, suffix: str) -> str:
+        """
+        Get MIME type for a file suffix.
+
+        Args:
+            suffix: File extension (e.g., '.ogg', '.wav')
+
+        Returns:
+            MIME type string
+        """
+        mime_map = {
+            ".ogg": "audio/ogg",
+            ".wav": "audio/wav",
+            ".mp3": "audio/mpeg",
+            ".mp4": "audio/mp4",
+            ".m4a": "audio/mp4",
+            ".webm": "audio/webm",
+            ".flac": "audio/flac",
+        }
+        return mime_map.get(suffix.lower(), "application/octet-stream")
+
+    def transcribe(self, audio_data: bytes, filename: str = None) -> Tuple[str, float]:
         """
         Transcribe audio data to text using the Whisper model.
 
@@ -102,6 +123,9 @@ class WhisperService:
                 Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm, flac, ogg.
                 The audio will be automatically converted to Whisper-compatible
                 format (16-bit PCM, mono, 16kHz).
+            filename: Optional filename to detect the audio format from extension.
+                If not provided, defaults to .wav. The extension is used to create
+                the temporary file with the correct format.
 
         Returns:
             A tuple containing:
@@ -114,28 +138,54 @@ class WhisperService:
                 exception message includes details about the failure.
 
         Note:
-            The audio data is automatically converted to Whisper-compatible format
-            (16-bit PCM, mono, 16kHz) and written to a temporary WAV file before
-            being sent to the Whisper API. The temporary file is automatically
-            cleaned up after transcription.
+            The audio data is written to a temporary file with the correct extension
+            based on the filename (or .wav as default) before being sent to the
+            Whisper API. The temporary file is automatically cleaned up after transcription.
 
         Example:
             >>> with open("recording.wav", "rb") as f:
             ...     audio_bytes = f.read()
-            >>> text, duration = service.transcribe(audio_bytes)
+            >>> text, duration = service.transcribe(audio_bytes, "recording.wav")
             >>> print(f"Transcription ({duration:.2f}s): {text}")
         """
         start_time = time.time()
         temp_filename = None
 
         try:
-            # Create a temporary file and write audio data to it
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+            # Determine file extension from filename or default to .wav
+            if filename:
+                # Extract extension from filename
+                _, ext = os.path.splitext(filename.lower())
+                # Map common extensions to valid ones
+                ext_map = {
+                    ".ogg": ".ogg",
+                    ".opus": ".ogg",  # OGG container with Opus codec
+                    ".wav": ".wav",
+                    ".mp3": ".mp3",
+                    ".mp4": ".mp4",
+                    ".m4a": ".m4a",
+                    ".webm": ".webm",
+                    ".flac": ".flac",
+                }
+                suffix = ext_map.get(ext, ".wav")  # Default to .wav if unknown
+            else:
+                suffix = ".wav"  # Default extension
+
+            # Create a temporary file with the correct extension
+            # Write the file and ensure it's flushed and closed before reading
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
                 temp_filename = temp_file.name
                 temp_file.write(audio_data)
+                temp_file.flush()  # Ensure data is written to disk
+                os.fsync(temp_file.fileno())  # Force write to disk
+            # File is now closed and flushed, safe to read
 
-            # Open the file in read mode for the API
+            # Open the file for the OpenAI client
+            # Use a context manager to ensure proper file handling
             with open(temp_filename, "rb") as audio_file:
+                # The OpenAI client will read from the file
+                # Ensure file pointer is at the start
+                audio_file.seek(0)
                 transcript = self.client.audio.transcriptions.create(
                     model=self.model_name,  # match your deployed model name
                     file=audio_file,
@@ -149,7 +199,13 @@ class WhisperService:
 
         except Exception as e:
             error_msg = str(e)
-            raise Exception(f"Failed to transcribe audio: {error_msg}")
+            # Include filename in error for debugging
+            file_info = (
+                f" (filename: {filename}, size: {len(audio_data)} bytes, temp: {temp_filename})"
+                if filename
+                else f" (size: {len(audio_data)} bytes, temp: {temp_filename})"
+            )
+            raise Exception(f"Failed to transcribe audio{file_info}: {error_msg}")
         finally:
             # Clean up temporary file
             if temp_filename and os.path.exists(temp_filename):
