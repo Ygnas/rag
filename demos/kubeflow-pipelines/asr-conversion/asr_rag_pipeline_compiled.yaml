@@ -221,7 +221,7 @@ deploymentSpec:
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'llama-stack-client==0.3.0'\
           \ 'fire' 'requests' 'openai-whisper'  &&  python3 -m pip install --quiet\
-          \ --no-warn-script-location 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5;\
+          \ --no-warn-script-location 'kfp==2.14.3' '--no-deps' 'typing-extensions>=3.7.4,<5;\
           \ python_version<\"3.9\"' && \"$0\" \"$@\"\n"
         - sh
         - -ec
@@ -239,13 +239,17 @@ deploymentSpec:
           \ int,\n    chunk_overlap_tokens: int,\n    base_url: str,\n    audio_filenames:\
           \ str,\n):\n    import io\n    import os\n    import tempfile\n    import\
           \ requests\n    import whisper\n    from llama_stack_client import LlamaStackClient\n\
-          \n    def download_and_install_ffmpeg():\n        import os\n        import\
+          \n    # ffmpeg is required for OpenAI Whisper to decode audio inputs\n \
+          \   def download_and_install_ffmpeg():\n        import os\n        import\
           \ subprocess\n\n        try:\n            print(\"Downloading static ffmpeg\
           \ binary...\")\n\n            import urllib.request\n            import\
           \ stat\n            import pathlib\n            import shutil\n\n      \
           \      # Create temp directory\n            temp_dir = pathlib.Path(\"/tmp/ffmpeg_install\"\
           )\n            temp_dir.mkdir(exist_ok=True)\n\n            # Download static\
-          \ ffmpeg binary\n            ffmpeg_url = \"https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz\"\
+          \ ffmpeg binary using pinned build version.\n            # Build: https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2025-12-01-12-56\n\
+          \            build_id = \"autobuild-2025-12-01-12-56\"\n            artifact\
+          \ = \"ffmpeg-N-121951-g7043522fe0-linux64-gpl.tar.xz\"\n            ffmpeg_url\
+          \ = f\"https://github.com/BtbN/FFmpeg-Builds/releases/download/{build_id}/{artifact}\"\
           \n            ffmpeg_archive = temp_dir / \"ffmpeg-static.tar.xz\"\n\n \
           \           print(f\"Downloading ffmpeg from {ffmpeg_url}\")\n         \
           \   urllib.request.urlretrieve(ffmpeg_url, ffmpeg_archive)\n\n         \
@@ -360,7 +364,7 @@ deploymentSpec:
           \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
           \ python3 -m pip install --quiet --no-warn-script-location 'llama-stack-client==0.3.0'\
           \ 'fire' 'requests' 'openai-whisper'  &&  python3 -m pip install --quiet\
-          \ --no-warn-script-location 'kfp==2.14.6' '--no-deps' 'typing-extensions>=3.7.4,<5;\
+          \ --no-warn-script-location 'kfp==2.14.3' '--no-deps' 'typing-extensions>=3.7.4,<5;\
           \ python_version<\"3.9\"' && \"$0\" \"$@\"\n"
         - sh
         - -ec
@@ -378,13 +382,17 @@ deploymentSpec:
           \ int,\n    chunk_overlap_tokens: int,\n    base_url: str,\n    audio_filenames:\
           \ str,\n):\n    import io\n    import os\n    import tempfile\n    import\
           \ requests\n    import whisper\n    from llama_stack_client import LlamaStackClient\n\
-          \n    def download_and_install_ffmpeg():\n        import os\n        import\
+          \n    # ffmpeg is required for OpenAI Whisper to decode audio inputs\n \
+          \   def download_and_install_ffmpeg():\n        import os\n        import\
           \ subprocess\n\n        try:\n            print(\"Downloading static ffmpeg\
           \ binary...\")\n\n            import urllib.request\n            import\
           \ stat\n            import pathlib\n            import shutil\n\n      \
           \      # Create temp directory\n            temp_dir = pathlib.Path(\"/tmp/ffmpeg_install\"\
           )\n            temp_dir.mkdir(exist_ok=True)\n\n            # Download static\
-          \ ffmpeg binary\n            ffmpeg_url = \"https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz\"\
+          \ ffmpeg binary using pinned build version.\n            # Build: https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2025-12-01-12-56\n\
+          \            build_id = \"autobuild-2025-12-01-12-56\"\n            artifact\
+          \ = \"ffmpeg-N-121951-g7043522fe0-linux64-gpl.tar.xz\"\n            ffmpeg_url\
+          \ = f\"https://github.com/BtbN/FFmpeg-Builds/releases/download/{build_id}/{artifact}\"\
           \n            ffmpeg_archive = temp_dir / \"ffmpeg-static.tar.xz\"\n\n \
           \           print(f\"Downloading ffmpeg from {ffmpeg_url}\")\n         \
           \   urllib.request.urlretrieve(ffmpeg_url, ffmpeg_archive)\n\n         \
@@ -551,7 +559,7 @@ root:
         isOptional: true
         parameterType: STRING
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.14.6
+sdkVersion: kfp-2.14.3
 ---
 platforms:
   kubernetes:

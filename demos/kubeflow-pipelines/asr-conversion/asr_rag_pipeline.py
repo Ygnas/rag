@@ -50,6 +50,7 @@ def register_vector_store_and_files(
     import whisper
     from llama_stack_client import LlamaStackClient
 
+    # ffmpeg is required for OpenAI Whisper to decode audio inputs
     def download_and_install_ffmpeg():
         import os
         import subprocess
@@ -66,8 +67,11 @@ def register_vector_store_and_files(
             temp_dir = pathlib.Path("/tmp/ffmpeg_install")
             temp_dir.mkdir(exist_ok=True)
 
-            # Download static ffmpeg binary
-            ffmpeg_url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz"
+            # Download static ffmpeg binary using pinned build version.
+            # Build: https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2025-12-01-12-56
+            build_id = "autobuild-2025-12-01-12-56"
+            artifact = "ffmpeg-N-121951-g7043522fe0-linux64-gpl.tar.xz"
+            ffmpeg_url = f"https://github.com/BtbN/FFmpeg-Builds/releases/download/{build_id}/{artifact}"
             ffmpeg_archive = temp_dir / "ffmpeg-static.tar.xz"
 
             print(f"Downloading ffmpeg from {ffmpeg_url}")
