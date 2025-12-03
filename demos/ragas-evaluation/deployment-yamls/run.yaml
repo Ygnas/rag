@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-stack-config
+  namespace: ragas-evaluation
+data:
+  run.yaml: |
+    version: 2
+    image_name: rh
+    apis:
+    - eval
+    - inference
+    - files
+    - benchmarks
+    - datasetio
+    providers:
+      eval:
+        - provider_id: ${env.KUBEFLOW_LLAMA_STACK_URL:+trustyai_ragas_remote}
+          provider_type: remote::trustyai_ragas
+          module: llama_stack_provider_ragas.remote
+          config:
+            embedding_model: ${env.EMBEDDING_MODEL}
+            kubeflow_config:
+              results_s3_prefix: ${env.KUBEFLOW_RESULTS_S3_PREFIX}
+              s3_credentials_secret_name: ${env.KUBEFLOW_S3_CREDENTIALS_SECRET_NAME}
+              pipelines_endpoint: ${env.KUBEFLOW_PIPELINES_ENDPOINT}
+              namespace: ${env.KUBEFLOW_NAMESPACE}
+              llama_stack_url: ${env.KUBEFLOW_LLAMA_STACK_URL}
+              base_image: ${env.KUBEFLOW_BASE_IMAGE}
+              pipelines_api_token: ${env.KUBEFLOW_PIPELINES_TOKEN:=}
+            kvstore:
+              namespace: ragas
+              backend: kv_default
+        - provider_id: ${env.EMBEDDING_MODEL:+trustyai_ragas_inline}
+          provider_type: inline::trustyai_ragas
+          module: llama_stack_provider_ragas.inline
+          config:
+            enable_prompt_logging: true
+            embedding_model: ${env.EMBEDDING_MODEL}
+            kvstore:
+              type: sqlite
+              namespace: ragas
+              backend: kv_default
+      datasetio:
+      - provider_id: localfs
+        provider_type: inline::localfs
+        config:
+          kvstore:
+            type: sqlite
+            namespace: datasetio::localfs
+            backend: kv_default
+      inference:
+        - provider_id: vllm
+          provider_type: remote::vllm
+          config:
+            url: ${env.VLLM_URL}
+            model: ${env.INFERENCE_MODEL}
+            tls_verify: ${env.VLLM_TLS_VERIFY:=false}
+            api_token: ${env.VLLM_API_TOKEN:=fake}
+        - provider_id: sentence-transformers
+          provider_type: inline::sentence-transformers
+          config: {}
+      files:
+      - provider_id: meta-reference-files
+        provider_type: inline::localfs
+        config:
+          storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/rh/files}
+          metadata_store:
+            type: sqlite
+            db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/rh/files_metadata.db}
+      telemetry:
+      - provider_id: meta-reference
+        provider_type: inline::meta-reference
+        config:
+          service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
+          sinks: ${env.TELEMETRY_SINKS:=console}
+          otel_exporter_otlp_endpoint: ${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}
+    storage:
+      backends:
+        kv_default:
+          type: kv_sqlite
+          db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/rh/kvstore.db}
+        sql_default:
+          type: sql_sqlite
+          db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/rh/sql_store.db}
+      stores:
+        metadata:
+          namespace: registry
+          backend: kv_default
+        inference:
+          table_name: inference_store
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
+        conversations:
+          table_name: openai_conversations
+          backend: sql_default
+    registered_resources:
+      models: []
+      shields: []
+      vector_dbs: []
+      datasets: []
+      scoring_fns: []
+      benchmarks: []
+      tool_groups: []
+    server:
+      port: 8321

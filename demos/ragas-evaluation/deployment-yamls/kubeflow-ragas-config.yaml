@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubeflow-ragas-config
+  namespace: ragas-evaluation
+data:
+  EMBEDDING_MODEL: "sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+  KUBEFLOW_LLAMA_STACK_URL: "http://lsd-ragas-example-service:8321"
+  # use the following command to get the endpoint:
+  # echo "https://$(oc get route ds-pipeline-dspa -n ragas-evaluation -o jsonpath='{.spec.host}')"
+  KUBEFLOW_PIPELINES_ENDPOINT: ""
+  KUBEFLOW_NAMESPACE: "ragas-evaluation"
+  KUBEFLOW_BASE_IMAGE: "quay.io/diegosquayorg/my-ragas-provider-image:latest"
+  # set the S3 prefix to the bucket you want to use for results
+  KUBEFLOW_RESULTS_S3_PREFIX: "s3://<your-bucket-name>/ragas-results"
+  KUBEFLOW_S3_CREDENTIALS_SECRET_NAME: "aws-credentials"
