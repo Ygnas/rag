@@ -34,9 +34,7 @@ delete-qwen3-14b-awq:
 	$(KUBECTL) delete -f deployment-yamls/qwen3-14b-awq-deployment.yaml -n $(NAMESPACE) || true
 
 deploy-lsd-server:
-	$(KUBECTL) apply -f deployment-yamls/run.yaml -n $(NAMESPACE)
 	$(KUBECTL) apply -f deployment-yamls/llama-stack-distribution.yaml -n $(NAMESPACE)
 
 delete-lsd-server:
 	$(KUBECTL) delete -f deployment-yamls/llama-stack-distribution.yaml -n $(NAMESPACE) || true
-	$(KUBECTL) delete -f deployment-yamls/run.yaml -n $(NAMESPACE) || true

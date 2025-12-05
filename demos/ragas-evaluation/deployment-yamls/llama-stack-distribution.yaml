@@ -7,10 +7,6 @@ spec:
   replicas: 1
   server:
     containerSpec:
-      command:
-        - /bin/sh
-        - -c
-        - llama stack run /etc/llama-stack/run.yaml
       env:
         - name: VLLM_MAX_TOKENS
           value: "4096"
@@ -18,8 +14,6 @@ spec:
           value: qwen3-14b-awq
         - name: VLLM_URL
           value: 'http://qwen3-14b-awq-predictor:8080/v1'
-        - name: EMBEDDING_MODEL
-          value: sentence-transformers/nomic-ai/nomic-embed-text-v1.5
         - name: VLLM_TLS_VERIFY
           value: "false"
         - name: VLLM_API_TOKEN
@@ -98,5 +92,3 @@ spec:
       port: 8321
     distribution:
       name: rh-dev
-    userConfig:
-      configMapName: llama-stack-config
