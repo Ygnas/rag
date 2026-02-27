@@ -16,9 +16,10 @@
 This demo showcases how to generate synthetic RAG evaluation datasets using the SDG Hub RAG Flow and evaluate them using the RAGAS Llama Stack Eval Provider developed by the Trusty AI team. The demo demonstrates:
 
 1. **Synthetic Dataset Generation**: Using SDG Hub to create question-answer pairs with ground truth context from documents
-2. **RAGAS Evaluation**: Using the RAGAS provider to evaluate RAG systems with metrics like faithfulness, answer relevancy, context precision, and context recall
+2. **RAG Inference**: Running the synthetic questions through a real RAG pipeline (vector store + file_search) to generate answers grounded in retrieved contexts
+3. **RAGAS Evaluation**: Using the RAGAS provider to evaluate the RAG system's answers with metrics like faithfulness, answer relevancy, context precision, and context recall
 
-The demo includes notebooks for dataset generation and evaluation, running on Red Hat OpenShift AI.
+The demo includes three notebooks for dataset generation, RAG inference, and evaluation, running on Red Hat OpenShift AI.
 
 This guide assumes RHOAI 3.4+ is installed on an OpenShift 4.19.9+ cluster.
 
@@ -43,6 +44,7 @@ This demo includes a **self-contained deployment** with:
 - [Deploy AI Models and Llama Stack Server](#deploy-ai-models-and-llama-stack-server)
 - [Run the Evaluation Flow](#run-the-evaluation-flow)
   - [Generate Synthetic Dataset](#generate-synthetic-dataset)
+  - [Run RAG Inference](#run-rag-inference)
   - [Run RAGAS Evaluation](#run-ragas-evaluation)
 
 ---
@@ -190,13 +192,26 @@ make delete-all
 
 ---
 
+### Run RAG Inference
+
+**Steps:**
+
+1. In the same JupyterNotebook environment, open the `2.rag_inference.ipynb` file.
+2. Follow the notebook steps to:
+   - Upload the source PDF and create a Milvus-backed vector store
+   - Load the synthetic questions generated in the previous notebook
+   - Run each question through the RAG pipeline using Llama Stack's `file_search` tool
+   - Save RAG answers and retrieved contexts to `rag_inference_dataset.jsonl`
+
+---
+
 ### Run RAGAS Evaluation
 
 **Steps:**
 
-1. In the same JupyterNotebook environment, open the `2.ragas-evaluation.ipynb` file.
+1. In the same JupyterNotebook environment, open the `3.ragas-evaluation.ipynb` file.
 2. Follow the notebook steps to:
    - Set up the Llama Stack client
-   - Prepare your evaluation dataset (from the previous notebook or your own dataset)
+   - Load the RAG inference dataset (from the previous notebook)
    - Run RAGAS evaluation metrics
    - Visualize and analyze the results
