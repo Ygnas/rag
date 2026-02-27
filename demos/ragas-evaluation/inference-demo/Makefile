@@ -17,36 +17,27 @@ deploy-all:
 	$(MAKE) deploy-postgres
 	$(MAKE) deploy-dspa
 	$(MAKE) deploy-qwen3-14b-awq
-	$(MAKE) deploy-gpt-oss-20b
 	$(KUBECTL) wait --for=condition=available --timeout=1200s deployment --all -n $(NAMESPACE) || true
 	$(MAKE) deploy-lsd-server
 	$(KUBECTL) wait --for=condition=available --timeout=300s deployment --all -n $(NAMESPACE) || true
 
-delete-all: delete-lsd-server delete-qwen3-14b-awq delete-gpt-oss-20b delete-dspa delete-postgres delete-minio delete-configs
+delete-all: delete-lsd-server delete-qwen3-14b-awq delete-dspa delete-postgres delete-minio delete-configs
 
 deploy-configs:
 	$(KUBECTL) apply -f ../shared-resources/aws-credentials.yaml -n $(NAMESPACE)
 	$(KUBECTL) apply -f ../shared-resources/kubeflow-ragas-config.yaml -n $(NAMESPACE)
-	$(KUBECTL) apply -f deployment-yamls/llama-stack-config.yaml -n $(NAMESPACE)
-	$(KUBECTL) apply -f deployment-yamls/inference-models-secret.yaml -n $(NAMESPACE)
+	$(KUBECTL) apply -f ../shared-resources/llama-stack-config.yaml -n $(NAMESPACE)
 
 delete-configs:
-	$(KUBECTL) delete -f deployment-yamls/llama-stack-config.yaml -n $(NAMESPACE) || true
+	$(KUBECTL) delete -f ../shared-resources/llama-stack-config.yaml -n $(NAMESPACE) || true
 	$(KUBECTL) delete -f ../shared-resources/kubeflow-ragas-config.yaml -n $(NAMESPACE) || true
 	$(KUBECTL) delete -f ../shared-resources/aws-credentials.yaml -n $(NAMESPACE) || true
-	$(KUBECTL) delete -f deployment-yamls/inference-models-secret.yaml -n $(NAMESPACE) || true
 
 deploy-qwen3-14b-awq:
 	$(KUBECTL) apply -f ../../common-deployments/qwen3-14b-awq-deployment.yaml -n $(NAMESPACE)
 
 delete-qwen3-14b-awq:
 	$(KUBECTL) delete -f ../../common-deployments/qwen3-14b-awq-deployment.yaml -n $(NAMESPACE) || true
-
-deploy-gpt-oss-20b:
-	$(KUBECTL) apply -f ../../common-deployments/gpt-oss-20b.yaml -n $(NAMESPACE)
-
-delete-gpt-oss-20b:
-	$(KUBECTL) delete -f ../../common-deployments/gpt-oss-20b.yaml -n $(NAMESPACE) || true
 
 deploy-lsd-server:
 	$(KUBECTL) apply -f deployment-yamls/llama-stack-distribution.yaml -n $(NAMESPACE)
